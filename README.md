@@ -51,6 +51,13 @@ All processes are automated and accessible through a web interface.
 
 ---
 
+## 🎯 Purpose
+
+This project was built to automate the process of tracking Instagram follower changes over time.  
+Instead of manually checking profiles, users can analyze follow/unfollow behavior using stored data snapshots and automated comparison.
+
+
+
 ## ▶️ Usage
 
 1. Start the Flask application:
