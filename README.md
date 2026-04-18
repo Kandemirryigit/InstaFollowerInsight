@@ -96,6 +96,19 @@ InstaFollowerInsight/
 ### Login Page
 <img width="1916" height="950" alt="Screenshot From 2026-04-18 12-47-47" src="https://github.com/user-attachments/assets/218f5ea3-7c1e-43b1-9ac5-5fe81743241d" />
 
+### Dashboard
+<img width="1916" height="950" alt="Screenshot From 2026-04-18 12-51-11" src="https://github.com/user-attachments/assets/39afe78b-e61f-4ba0-96f4-9e14daa4b2d3" />
+
+### Scraping
+<img width="1916" height="950" alt="Screenshot From 2026-04-18 12-53-53" src="https://github.com/user-attachments/assets/b56ca536-b255-4e28-938b-8defdcd4d2b3" />
+
+### Compare
+<img width="1916" height="950" alt="Screenshot From 2026-04-18 12-52-02" src="https://github.com/user-attachments/assets/f6f09f04-ca2f-4982-8572-1f5324dc9e87" />
+
+
+
+
+
 
 
 
