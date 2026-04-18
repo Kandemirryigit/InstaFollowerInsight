@@ -92,6 +92,21 @@ InstaFollowerInsight/
 
 ---
 
+## 📁 Screenshots
+### Login Page
+<img width="1916" height="950" alt="Screenshot From 2026-04-18 12-47-47" src="https://github.com/user-attachments/assets/218f5ea3-7c1e-43b1-9ac5-5fe81743241d" />
+
+
+
+
+
+
+
+
+
+
+
+
 ## ⚠️ Disclaimer
 
 This project is for educational purposes only.
