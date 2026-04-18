@@ -4,14 +4,16 @@ A Python-based Instagram analytics tool that tracks and analyzes changes in foll
 
 ## 🚀 Overview
 
-**InstaFollowerInsight** helps you monitor Instagram accounts by taking snapshots of their followers and following lists. By comparing these snapshots at different times, the tool detects:
+**InstaFollowerInsight** is a full-stack automation tool that monitors Instagram accounts by taking snapshots of their followers and following lists. It uses web scraping and data comparison techniques to detect changes between different time intervals.
+
+By comparing snapshots, the system identifies:
 
 * ✅ New followers
 * ❌ Unfollowers
 * ➕ Newly followed accounts
 * ➖ Unfollowed accounts
 
-No manual checking — everything is automated and data-driven.
+All processes are automated and accessible through a web interface.
 
 ---
 
@@ -19,36 +21,51 @@ No manual checking — everything is automated and data-driven.
 
 * 📸 Snapshot-based tracking system
 * 🔍 Accurate follow/unfollow detection
+* 🌐 Web-based dashboard built with Flask
+* 🔐 User authentication system (login/register)
+* ⚡ Automated scraping using Selenium
+* 🧠 Efficient diff comparison algorithm
+* 💾 SQLite database for persistent storage
 * 📂 Supports multiple usernames or URLs
-* ⚡ Automated scraping with Selenium
-* 🧠 Efficient diff comparison logic
-* 💾 Local data storage for analysis
 
 ---
 
 ## 🛠️ Technologies Used
 
-* Python
-* Selenium
-* Pandas
+* **Backend:** Python, Flask
+* **Automation:** Selenium
+* **Database:** SQLite3
+* **Frontend:** HTML (Jinja Templates)
+* **Data Processing:** Pandas
+
+---
+
+## 🧠 How It Works
+
+1. The user logs into the system via the web interface.
+2. Selenium automates Instagram login and navigates to the target profile.
+3. Followers and following lists are scraped and stored in the SQLite database.
+4. Each run creates a new snapshot of the data.
+5. The system compares previous and current snapshots using a diff algorithm.
+6. Results are displayed on the dashboard.
 
 ---
 
 ## ▶️ Usage
 
-1. Run the script to collect initial data:
+1. Start the Flask application:
 
 ```bash
-python main.py
+python app.py
 ```
 
-2. Run it again later to take a new snapshot.
+2. Open your browser and go to:
 
-3. The tool will compare datasets and output:
+```
+http://127.0.0.1:5000/
+```
 
-   * New followers
-   * Unfollowers
-   * Follow/unfollow changes
+3. Register/Login and start tracking accounts.
 
 ---
 
@@ -71,8 +88,6 @@ InstaFollowerInsight/
 │── login.py
 │── models.py
 │── scraper.py
-
-
 ```
 
 ---
@@ -86,9 +101,11 @@ Use responsibly and comply with Instagram's terms of service.
 
 ## 📌 Future Improvements
 
-* Real-time tracking
-* Notification system
-* Advanced analytics
+* Real-time tracking system
+* Email/notification alerts
+* Data visualization (charts & graphs)
+* API integration
+* Deployment (Docker / Cloud)
 
 ---
 
