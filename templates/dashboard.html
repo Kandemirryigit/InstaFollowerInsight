@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — InstaTracker{% endblock %}
+{% block content %}
+
+<div class="flex-between" style="margin-bottom:0.3rem">
+    <h1>Dashboard</h1>
+</div>
+<p class="subtitle">Botu çalıştır ve snapshot'larını yönet.</p>
+
+<!-- BOT FORMU -->
+<div class="card">
+    <h2>🤖 Botu Çalıştır</h2>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem;">
+        Instagram bilgilerin sadece giriş için kullanılır, kaydedilmez.
+    </p>
+    <form method="POST" action="{{ url_for('run_bot') }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+                <label>Instagram Kullanıcı Adı</label>
+                <input type="text" name="ig_username" placeholder="senin_kullanici_adin" required>
+            </div>
+            <div class="form-group">
+                <label>Instagram Şifresi</label>
+                <input type="password" name="ig_password" placeholder="••••••••" required>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+                <label>Hedef Hesap</label>
+                <input type="text" name="looking_account" placeholder="hedef_hesap" required>
+            </div>
+            <div class="form-group">
+                <label>Ne Çekilsin?</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-top:0.2rem;">
+                    <label class="type-option" id="opt-following">
+                        <input type="radio" name="scrape_type" value="following" checked hidden>
+                        <span>➡️ Takip Ettikleri</span>
+                    </label>
+                    <label class="type-option" id="opt-followers">
+                        <input type="radio" name="scrape_type" value="followers" hidden>
+                        <span>⬅️ Takipçiler</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">▶ Başlat</button>
+    </form>
+</div>
+
+<style>
+    .type-option {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.65rem 0.8rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--muted);
+        transition: all 0.15s;
+        user-select: none;
+        text-align: center;
+    }
+    .type-option:hover { border-color: #444; color: var(--text); }
+    .type-option.selected {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(232,255,71,0.05);
+    }
+</style>
+<script>
+    document.querySelectorAll('.type-option').forEach(label => {
+        label.addEventListener('click', () => {
+            document.querySelectorAll('.type-option').forEach(l => l.classList.remove('selected'));
+            label.classList.add('selected');
+        });
+    });
+    document.getElementById('opt-following').classList.add('selected');
+</script>
+
+<!-- SNAPSHOT LİSTESİ -->
+<div class="flex-between" style="margin:2rem 0 1rem">
+    <h2 style="margin:0">Snapshot'larım</h2>
+    {% if snapshots|length >= 2 %}
+    <a href="{{ url_for('compare') }}" class="btn btn-ghost">⇄ Karşılaştır</a>
+    {% endif %}
+</div>
+
+{% if snapshots %}
+<div class="card" style="padding:0">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Hedef Hesap</th>
+                    <th>Tür</th>
+                    <th>Kişi Sayısı</th>
+                    <th>Tarih</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in snapshots %}
+                <tr>
+                    <td class="text-muted">{{ s.id }}</td>
+                    <td><strong>@{{ s.target_instagram }}</strong></td>
+                    <td>
+                        <span class="tag" style="background:#1a1a1a;color:var(--muted)">
+                            {{ s.type_emoji() }} {{ s.type_label() }}
+                        </span>
+                    </td>
+                    <td>{{ s.follower_count() }}</td>
+                    <td class="mono text-muted" style="font-size:0.8rem;">{{ s.taken_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td style="text-align:right;">
+                        <a href="{{ url_for('snapshot_detail', snapshot_id=s.id) }}" class="btn btn-ghost" style="padding:0.35rem 0.7rem;font-size:0.78rem;margin-right:0.3rem;">Detay</a>
+                        <form method="POST" action="{{ url_for('delete_snapshot', snapshot_id=s.id) }}" style="display:inline" onsubmit="return confirm('Bu snapshot silinsin mi?')">
+                            <button type="submit" class="btn btn-danger">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card empty">
+    <p>Henüz hiç snapshot yok.</p>
+    <p style="font-size:0.82rem;margin-top:0.5rem;">Botu çalıştırarak ilk kaydı oluştur.</p>
+</div>
+{% endif %}
+
+{% endblock %}

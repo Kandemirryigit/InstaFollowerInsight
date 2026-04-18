@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Snapshot #{{ snapshot.id }} — InstaTracker{% endblock %}
+{% block content %}
+
+<div class="flex" style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-ghost" style="padding:0.4rem 0.8rem;font-size:0.82rem;">← Geri</a>
+</div>
+
+<h1>@{{ snapshot.target_instagram }}</h1>
+<p class="subtitle">
+    Snapshot #{{ snapshot.id }} ·
+    {% if snapshot.scrape_type == 'followers' %}⬅️ Takipçiler{% else %}➡️ Takip Ettikleri{% endif %} ·
+    {{ snapshot.taken_at.strftime('%d %B %Y, %H:%M') }}
+</p>
+
+<div class="stats">
+    <div class="stat-box">
+        <div class="stat-label">Toplam Kişi</div>
+        <div class="stat-value yellow">{{ snapshot.followers|length }}</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-label">Arama Sonucu</div>
+        <div class="stat-value" id="filteredCount">{{ snapshot.followers|length }}</div>
+    </div>
+</div>
+
+<!-- ARAMA ÇUBUĞU -->
+<div style="margin-bottom:1rem;position:relative;">
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="Kullanıcı ara..."
+        style="padding-left:2.5rem;"
+        oninput="filterTable(this.value)"
+        autofocus
+    >
+    <span style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;">🔍</span>
+</div>
+
+<div class="card" style="padding:0">
+    <div class="table-wrap">
+        <table id="userTable">
+            <thead>
+                <tr><th>#</th><th>Kullanıcı Adı</th></tr>
+            </thead>
+            <tbody id="tableBody">
+                {% for f in snapshot.followers %}
+                <tr data-username="{{ f.instagram_username }}">
+                    <td class="text-muted seq">{{ loop.index }}</td>
+                    <td class="mono">
+                        <a href="https://instagram.com/{{ f.instagram_username }}" target="_blank"
+                           style="color:var(--text);text-decoration:none;">
+                            @{{ f.instagram_username }}
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="noResult" style="display:none;text-align:center;padding:2rem;color:var(--muted);font-size:0.88rem;">
+            Sonuç bulunamadı.
+        </div>
+    </div>
+</div>
+
+<script>
+    const filteredCount = document.getElementById("filteredCount");
+    const noResult      = document.getElementById("noResult");
+    const rows          = Array.from(document.querySelectorAll("#tableBody tr"));
+
+    function filterTable(query) {
+        const q = query.trim().toLowerCase();
+        let visible = 0;
+
+        rows.forEach(row => {
+            const username = row.dataset.username.toLowerCase();
+            const match = !q || username.includes(q);
+            row.style.display = match ? "" : "none";
+            if (match) {
+                row.querySelector(".seq").textContent = ++visible;
+            }
+        });
+
+        filteredCount.textContent = visible;
+        noResult.style.display = visible === 0 ? "block" : "none";
+    }
+</script>
+
+{% endblock %}

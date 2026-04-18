@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Kayıt — InstaTracker{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-logo">⬡ InstaTracker</div>
+    <div class="auth-sub">Hesap oluştur, takipçileri izlemeye başla.</div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <div class="card">
+        <h2>Kayıt Ol</h2>
+        <form method="POST" action="{{ url_for('auth_register') }}">
+            <div class="form-group">
+                <label>Kullanıcı Adı</label>
+                <input type="text" name="username" required autofocus>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label>Şifre</label>
+                <input type="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label>Şifre Tekrar</label>
+                <input type="password" name="confirm_password" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;">
+                Hesap Oluştur
+            </button>
+        </form>
+    </div>
+
+    <div class="auth-footer">
+        Zaten hesabın var mı? <a href="{{ url_for('auth_login') }}">Giriş yap</a>
+    </div>
+</div>
+{% endblock %}

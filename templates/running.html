@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+{% block title %}Bot Çalışıyor — InstaTracker{% endblock %}
+{% block content %}
+
+<style>
+    .progress-wrap { max-width: 500px; margin: 4rem auto; text-align: center; }
+
+    .icon-wrap { font-size: 2rem; margin-bottom: 1rem; animation: pulse 1.5s ease-in-out infinite; display: block; }
+    .icon-wrap.done { animation: none; }
+
+    /* ── Analiz ekranı ── */
+    .analyze-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.3rem; }
+    .analyze-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 2.5rem; font-family: 'DM Mono', monospace; }
+    .analyze-bar-bg { background: var(--border); border-radius: 99px; height: 6px; overflow: hidden; margin-bottom: 1rem; }
+    .analyze-bar-fill {
+        height: 100%; border-radius: 99px; width: 0%;
+        background: linear-gradient(90deg, var(--accent), #b8ff00);
+        transition: width 0.6s ease;
+        position: relative;
+    }
+    .analyze-bar-fill::after {
+        content: '';
+        position: absolute; top: 0; right: 0;
+        width: 80px; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+        animation: shimmer 1.1s ease-in-out infinite;
+    }
+    .analyze-status { color: var(--muted); font-size: 0.8rem; font-family: 'DM Mono', monospace; min-height: 1.2rem; }
+
+    /* ── Hazır ekranı ── */
+    .ready-card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 16px; padding: 2rem 2rem 1.5rem;
+        text-align: center;
+    }
+    .ready-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+    .ready-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .ready-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; font-family: 'DM Mono', monospace; }
+    .ready-stat {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        background: rgba(232,255,71,0.07); border: 1px solid rgba(232,255,71,0.2);
+        border-radius: 10px; padding: 0.6rem 1.2rem;
+        margin-bottom: 1.8rem;
+    }
+    .ready-stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.2rem; }
+    .ready-stat-value { font-size: 1.6rem; font-weight: 800; font-family: 'DM Mono', monospace; color: var(--accent); }
+    .ready-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    .btn-start {
+        padding: 0.85rem 1rem; border-radius: 10px;
+        background: var(--accent); color: #000;
+        font-weight: 800; font-size: 0.95rem;
+        border: none; cursor: pointer;
+        transition: opacity 0.15s; font-family: 'Syne', sans-serif;
+    }
+    .btn-start:hover { opacity: 0.85; }
+    .btn-cancel-ready {
+        padding: 0.85rem 1rem; border-radius: 10px;
+        background: transparent; color: var(--muted);
+        border: 1.5px solid var(--border);
+        font-weight: 700; font-size: 0.95rem;
+        cursor: pointer; transition: all 0.15s;
+        font-family: 'Syne', sans-serif;
+    }
+    .btn-cancel-ready:hover { color: var(--danger); border-color: var(--danger); }
+
+    /* ── Tarama ekranı ── */
+    .pct-label { font-size: 3.8rem; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 1rem; font-family: 'DM Mono', monospace; letter-spacing: -0.03em; }
+    .bar-bg { background: var(--border); border-radius: 99px; height: 6px; overflow: hidden; margin-bottom: 1.8rem; position: relative; }
+    .bar-fill { height: 100%; border-radius: 99px; width: 0%; position: relative; background: var(--accent); transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+    .bar-fill::after {
+        content: '';
+        position: absolute; top: 0; right: 0;
+        width: 80px; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+        animation: shimmer 1.1s ease-in-out infinite;
+    }
+    .info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1.2rem; }
+    .info-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem; }
+    .info-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.3rem; }
+    .info-value { font-size: 1.25rem; font-weight: 800; font-family: 'DM Mono', monospace; color: var(--text); }
+    .info-value.accent { color: var(--accent); }
+    .scrape-status { color: var(--muted); font-size: 0.8rem; font-family: 'DM Mono', monospace; min-height: 1.2rem; margin-bottom: 1.5rem; }
+    .stop-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    .btn-stop-save {
+        padding: 0.7rem 1rem; border-radius: 10px;
+        background: rgba(71,255,138,0.08); border: 1.5px solid var(--success);
+        color: var(--success); font-weight: 700; font-size: 0.85rem;
+        cursor: pointer; transition: background 0.15s; font-family: 'Syne', sans-serif;
+    }
+    .btn-stop-save:hover { background: rgba(71,255,138,0.15); }
+    .btn-stop-discard {
+        padding: 0.7rem 1rem; border-radius: 10px;
+        background: rgba(255,77,77,0.08); border: 1.5px solid var(--danger);
+        color: var(--danger); font-weight: 700; font-size: 0.85rem;
+        cursor: pointer; transition: background 0.15s; font-family: 'Syne', sans-serif;
+    }
+    .btn-stop-discard:hover { background: rgba(255,77,77,0.15); }
+    .btn-stop-save:disabled, .btn-stop-discard:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Popup'lar ── */
+    .popup-overlay {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.7); z-index: 999;
+        align-items: center; justify-content: center;
+    }
+    .popup-overlay.show { display: flex; }
+    .popup-box {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 16px; padding: 2rem 2.5rem; max-width: 420px;
+        width: 90%; text-align: center; animation: slideUp 0.25s ease;
+    }
+    .popup-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .popup-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.6rem; }
+    .popup-msg { font-size: 0.88rem; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
+    .popup-btn { border: none; border-radius: 8px; padding: 0.7rem 2rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+    .popup-btn:hover { opacity: 0.85; }
+    .popup-btn.green { background: var(--success); color: #000; }
+    .popup-btn.red   { background: var(--danger); color: #fff; }
+
+    .confirm-overlay {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.7); z-index: 998;
+        align-items: center; justify-content: center;
+    }
+    .confirm-overlay.show { display: flex; }
+    .confirm-box {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 16px; padding: 2rem 2.5rem; max-width: 400px;
+        width: 90%; text-align: center; animation: slideUp 0.25s ease;
+    }
+    .confirm-icon { font-size: 2rem; margin-bottom: 0.8rem; }
+    .confirm-title { font-size: 1rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .confirm-msg { font-size: 0.85rem; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
+    .confirm-btns { display: flex; gap: 0.8rem; justify-content: center; }
+    .confirm-btns button { padding: 0.6rem 1.4rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; border: none; font-family: 'Syne', sans-serif; transition: opacity 0.15s; }
+    .confirm-btns button:hover { opacity: 0.85; }
+    .btn-confirm-cancel { background: var(--border); color: var(--text); }
+
+    @keyframes shimmer { 0%{opacity:0} 50%{opacity:1} 100%{opacity:0} }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+</style>
+
+<!-- Hata/Bilgi Popup -->
+<div class="popup-overlay" id="infoPopup">
+    <div class="popup-box">
+        <div class="popup-icon" id="popupIcon">❌</div>
+        <div class="popup-title" id="popupTitle"></div>
+        <div class="popup-msg" id="popupMsg"></div>
+        <button class="popup-btn" id="popupBtn" onclick="closePopup()">Tamam</button>
+    </div>
+</div>
+
+<!-- Durdur Onay Popup -->
+<div class="confirm-overlay" id="confirmPopup">
+    <div class="confirm-box">
+        <div class="confirm-icon" id="confirmIcon">⏹️</div>
+        <div class="confirm-title" id="confirmTitle"></div>
+        <div class="confirm-msg" id="confirmMsg"></div>
+        <div class="confirm-btns">
+            <button id="confirmYes" onclick="confirmStop()">Evet, durdur</button>
+            <button class="btn-confirm-cancel" onclick="closeConfirm()">Vazgeç</button>
+        </div>
+    </div>
+</div>
+
+<div class="progress-wrap">
+
+    <!-- ── EKRAN 1: Profil Analiz Ediliyor ── -->
+    <div id="analyzeScreen">
+        <span class="icon-wrap" id="analyzeIcon">🔍</span>
+        <div class="analyze-title">Profil Analiz Ediliyor</div>
+        <div class="analyze-sub">@{{ looking_account }} · {{ type_label }}</div>
+        <div class="analyze-bar-bg">
+            <div class="analyze-bar-fill" id="analyzeBar"></div>
+        </div>
+        <div class="analyze-status" id="analyzeStatus">Başlatılıyor...</div>
+    </div>
+
+    <!-- ── EKRAN 2: Hazır, Onayla ── -->
+    <div id="readyScreen" style="display:none;">
+        <div class="ready-card">
+            <span class="ready-icon">✅</span>
+            <div class="ready-title">Her Şey Hazır!</div>
+            <div class="ready-sub">@{{ looking_account }} · {{ type_label }}</div>
+            <div class="ready-stat">
+                <div>
+                    <div class="ready-stat-label">Taranacak Kişi</div>
+                    <div class="ready-stat-value" id="readyCount">—</div>
+                </div>
+            </div>
+            <div class="ready-btns">
+                <button class="btn-start" onclick="startScrape()">▶ Taramayı Başlat</button>
+                <button class="btn-cancel-ready" onclick="cancelScrape()">✕ İptal Et</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── EKRAN 3: Tarama ── -->
+    <div id="scrapeScreen" style="display:none;">
+        <span class="icon-wrap" id="scrapeIcon">🤖</span>
+        <div class="analyze-title">Taranıyor</div>
+        <div class="analyze-sub">@{{ looking_account }} · {{ type_label }}</div>
+        <div class="pct-label" id="pctLabel">0%</div>
+        <div class="bar-bg">
+            <div class="bar-fill" id="barFill"></div>
+        </div>
+        <div class="info-row">
+            <div class="info-box">
+                <div class="info-label">Bulunan Kişi</div>
+                <div class="info-value accent" id="foundCount">0</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Tahmini Süre</div>
+                <div class="info-value" id="etaLabel">—</div>
+            </div>
+        </div>
+        <div class="scrape-status" id="scrapeStatus">Başlatılıyor...</div>
+        <div class="stop-row">
+            <button class="btn-stop-save"    id="btnSave"    onclick="askStop('save')">💾 Kaydet ve Bitir</button>
+            <button class="btn-stop-discard" id="btnDiscard" onclick="askStop('discard')">⛔ Kaydetme ve Bitir</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const analyzeScreen = document.getElementById("analyzeScreen");
+    const readyScreen   = document.getElementById("readyScreen");
+    const scrapeScreen  = document.getElementById("scrapeScreen");
+    const analyzeBar    = document.getElementById("analyzeBar");
+    const analyzeStatus = document.getElementById("analyzeStatus");
+    const analyzeIcon   = document.getElementById("analyzeIcon");
+    const readyCount    = document.getElementById("readyCount");
+    const barFill       = document.getElementById("barFill");
+    const pctLabel      = document.getElementById("pctLabel");
+    const scrapeStatus  = document.getElementById("scrapeStatus");
+    const foundCount    = document.getElementById("foundCount");
+    const etaLabel      = document.getElementById("etaLabel");
+    const scrapeIcon    = document.getElementById("scrapeIcon");
+    const btnSave       = document.getElementById("btnSave");
+    const btnDiscard    = document.getElementById("btnDiscard");
+
+    let currentScreen = "analyze";
+    let startTime     = null;
+    const points      = [];
+    let etaDisplay    = null;
+    let etaInterval   = null;
+    let pendingAction = null;
+    let stopped       = false;
+
+    // ── Ekran geçişi ──────────────────────────────────────────────────────────
+    function showScreen(name) {
+        analyzeScreen.style.display = name === "analyze" ? "block" : "none";
+        readyScreen.style.display   = name === "ready"   ? "block" : "none";
+        scrapeScreen.style.display  = name === "scrape"  ? "block" : "none";
+        currentScreen = name;
+    }
+
+    // ── Bar yardımcıları ──────────────────────────────────────────────────────
+    function setAnalyzeBar(pct) {
+        analyzeBar.style.width = pct + "%";
+    }
+
+    function setScrapeBar(pct) {
+        barFill.style.width  = pct + "%";
+        pctLabel.textContent = Math.floor(pct) + "%";
+    }
+
+    function formatEta(secs) {
+        if (secs <= 0) return "Az kaldı...";
+        if (secs >= 60) {
+            const m = Math.floor(secs / 60);
+            const s = secs % 60;
+            return s > 0 ? `~${m}d ${s}s` : `~${m} dakika`;
+        }
+        return `~${secs} saniye`;
+    }
+
+    function updateEta(pct) {
+        if (!startTime || pct < 10) return;
+        const elapsed = (Date.now() - startTime) / 1000;
+        points.push({ elapsed, pct });
+        if (points.length > 8) points.shift();
+        if (points.length < 3) return;
+
+        const oldest    = points[0];
+        const newest    = points[points.length - 1];
+        const deltaPct  = newest.pct - oldest.pct;
+        const deltaTime = newest.elapsed - oldest.elapsed;
+        if (deltaPct <= 0 || deltaTime <= 0) return;
+
+        const pctPerSec = deltaPct / deltaTime;
+        const remaining = 100 - pct;
+        const rawEta    = Math.round(remaining / pctPerSec);
+        const clamped   = Math.max(2, Math.min(rawEta, 600));
+
+        if (etaDisplay === null || Math.abs(clamped - etaDisplay) / Math.max(etaDisplay, 1) > 0.25) {
+            etaDisplay = clamped;
+            etaLabel.textContent = formatEta(etaDisplay);
+            if (!etaInterval) {
+                etaInterval = setInterval(() => {
+                    if (!etaDisplay || etaDisplay <= 0) return;
+                    etaDisplay--;
+                    etaLabel.textContent = formatEta(etaDisplay);
+                }, 1000);
+            }
+        }
+    }
+
+    // ── Hazır ekranı ──────────────────────────────────────────────────────────
+    function startScrape() {
+        fetch("/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: ""
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                showScreen("scrape");
+                startTime = Date.now();
+            }
+        });
+    }
+
+    function cancelScrape() {
+        fetch("/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "action=discard"
+        });
+        window.location.href = "/dashboard";
+    }
+
+    // ── Durdur popup ──────────────────────────────────────────────────────────
+    function askStop(action) {
+        pendingAction = action;
+        const isSave  = action === "save";
+        document.getElementById("confirmIcon").textContent  = isSave ? "💾" : "⛔";
+        document.getElementById("confirmTitle").textContent = isSave ? "Kaydet ve bitir?" : "İptal et?";
+        document.getElementById("confirmMsg").textContent   = isSave
+            ? "Tarama durdurulacak ve şu ana kadar bulunan kişiler kaydedilecek."
+            : "Tarama durdurulacak ve hiçbir veri kaydedilmeyecek.";
+        const yesBtn = document.getElementById("confirmYes");
+        yesBtn.style.background = isSave ? "var(--success)" : "var(--danger)";
+        yesBtn.style.color      = isSave ? "#000" : "#fff";
+        document.getElementById("confirmPopup").classList.add("show");
+    }
+
+    function closeConfirm() {
+        document.getElementById("confirmPopup").classList.remove("show");
+        pendingAction = null;
+    }
+
+    function confirmStop() {
+        if (!pendingAction || stopped) return;
+        stopped = true;
+        closeConfirm();
+        btnSave.disabled    = true;
+        btnDiscard.disabled = true;
+        scrapeStatus.textContent = pendingAction === "save"
+            ? "💾 Durduruluyor, veriler kaydediliyor..."
+            : "⛔ İptal ediliyor...";
+
+        fetch("/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `action=${pendingAction}`
+        });
+    }
+
+    // ── Bilgi/Hata popup ──────────────────────────────────────────────────────
+    function showPopup({ icon, title, titleColor, msg, btnText, btnClass }) {
+        document.getElementById("popupIcon").textContent  = icon;
+        document.getElementById("popupTitle").textContent = title;
+        document.getElementById("popupTitle").style.color = titleColor;
+        document.getElementById("popupMsg").textContent   = msg;
+        const btn = document.getElementById("popupBtn");
+        btn.textContent = btnText;
+        btn.className   = "popup-btn " + btnClass;
+        document.getElementById("infoPopup").classList.add("show");
+    }
+
+    function closePopup() {
+        const btn = document.getElementById("popupBtn");
+        btn.textContent = "Dashboard'a dönülüyor...";
+        btn.disabled    = true;
+        setTimeout(() => { window.location.href = "/dashboard"; }, 800);
+    }
+
+    // ── SSE ───────────────────────────────────────────────────────────────────
+    const evtSource = new EventSource("/progress");
+
+    evtSource.onmessage = function(e) {
+        if (e.data === "done") {
+            evtSource.close();
+            clearInterval(etaInterval);
+            etaLabel.textContent = "Tamamlandı";
+            setScrapeBar(100);
+            document.querySelector(".stop-row").style.display = "none";
+            setTimeout(() => { scrapeIcon.classList.add("done"); scrapeIcon.textContent = "✅"; }, 400);
+            setTimeout(() => { window.location.href = "/dashboard"; }, 1800);
+            return;
+        }
+
+        const sepIdx = e.data.indexOf("|");
+        const rawPct = e.data.substring(0, sepIdx);
+        const msg    = e.data.substring(sepIdx + 1);
+        const pct    = parseInt(rawPct);
+
+        // ── Analiz aşaması ────────────────────────────────────────────────────
+        if (currentScreen === "analyze") {
+
+            // Özel sinyal: analiz bitti
+            if (msg.startsWith("READY|")) {
+                const count = msg.split("|")[1];
+                readyCount.textContent = count === "?" ? "?" : count;
+                analyzeIcon.classList.add("done");
+                analyzeIcon.textContent  = "✅";
+                analyzeStatus.textContent = "Analiz tamamlandı!";
+                setAnalyzeBar(100);
+                setTimeout(() => showScreen("ready"), 600);
+                return;
+            }
+
+            setAnalyzeBar(pct);
+            analyzeStatus.textContent = msg;
+            return;
+        }
+
+        // ── Tarama aşaması ────────────────────────────────────────────────────
+        if (currentScreen === "scrape") {
+
+            // Hata
+            if (pct === -1) {
+                evtSource.close();
+                clearInterval(etaInterval);
+                scrapeIcon.classList.add("done"); scrapeIcon.textContent = "❌";
+                barFill.style.background = "var(--danger)";
+                pctLabel.style.color     = "var(--danger)";
+                pctLabel.textContent     = "!";
+                etaLabel.textContent     = "—";
+                document.querySelector(".stop-row").style.display = "none";
+                showPopup({ icon: "❌", title: "Bir hata oluştu", titleColor: "var(--danger)", msg, btnText: "Tamam", btnClass: "red" });
+                return;
+            }
+
+            // İptal
+            if (pct === -2) {
+                evtSource.close();
+                clearInterval(etaInterval);
+                scrapeIcon.classList.add("done"); scrapeIcon.textContent = "⛔";
+                barFill.style.background = "var(--muted)";
+                pctLabel.style.color     = "var(--muted)";
+                pctLabel.textContent     = "—";
+                document.querySelector(".stop-row").style.display = "none";
+                showPopup({ icon: "⛔", title: "Tarama iptal edildi", titleColor: "var(--muted)", msg: "Hiçbir veri kaydedilmedi.", btnText: "Dashboard'a Dön", btnClass: "red" });
+                return;
+            }
+
+            setScrapeBar(pct);
+            scrapeStatus.textContent = msg;
+            updateEta(pct);
+
+            const match = msg.match(/^(\d+)\s*kişi/);
+            if (match) {
+                foundCount.textContent = parseInt(match[1]).toLocaleString("tr-TR");
+            }
+        }
+    };
+</script>
+
+{% endblock %}
